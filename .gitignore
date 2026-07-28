@@ -1,0 +1,24 @@
+# Keil MDK build output
+**/Objects/
+**/Listings/
+*.d
+*.dep
+*.o
+*.obj
+*.axf
+*.elf
+*.hex
+*.bin
+*.map
+
+# Keil/J-Link user sessions and logs
+*.uvguix.*
+*_Sequences_*.log
+JLinkLog.txt
+JLinkSettings.ini
+
+# Editor and OS metadata
+**/.vscode/
+.DS_Store
+Thumbs.db
+
