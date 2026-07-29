@@ -22,13 +22,13 @@ void Motor_Setpwm_L(int duty)
 
     if(duty >= 0)
     {
-        gpio_set_level(MOTOR_DIR2, 1);
-        pwm_set_duty(MOTOR_PWM2, duty);
+        gpio_set_level(MOTOR_DIR1, 0);
+        pwm_set_duty(MOTOR_PWM1, duty);
     }
     else
     {
-        gpio_set_level(MOTOR_DIR2, 0);
-        pwm_set_duty(MOTOR_PWM2, -duty);
+        gpio_set_level(MOTOR_DIR1, 1);
+        pwm_set_duty(MOTOR_PWM1, -duty);
     }
 }
 
@@ -41,13 +41,13 @@ void Motor_Setpwm_R(int duty)
 
     if(duty >= 0)
     {
-        gpio_set_level(MOTOR_DIR1, 1);
-        pwm_set_duty(MOTOR_PWM1, duty);
+        gpio_set_level(MOTOR_DIR2, 0);
+        pwm_set_duty(MOTOR_PWM2, duty);
     }
     else
     {
-        gpio_set_level(MOTOR_DIR1, 0);
-        pwm_set_duty(MOTOR_PWM1, -duty);
+        gpio_set_level(MOTOR_DIR2, 1);
+        pwm_set_duty(MOTOR_PWM2, -duty);
     }
 }
 
