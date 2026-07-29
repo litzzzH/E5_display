@@ -16,8 +16,6 @@
 #define TUNE_BASE_PWM_STEP            50
 #define TUNE_DIFF_STEP                20
 #define TUNE_TIME_STEP_MS             20
-#define TUNE_PWM_STEP                 50
-#define TUNE_ANGLE_STEP_X10           5
 #define TUNE_PERCENT_STEP             5
 #define TUNING_UI_VISIBLE_ROWS        8
 
@@ -25,26 +23,13 @@ typedef enum
 {
     TUNE_PARAM_SPEED_MODE = 0,
     TUNE_PARAM_TRACK_ENABLE,
-    TUNE_PARAM_TURNS_PER_LAP,
-    TUNE_PARAM_TOTAL_LAPS,
     TUNE_PARAM_BASE_PWM_L,
     TUNE_PARAM_BASE_PWM_R,
     TUNE_PARAM_DIFF_SMALL,
     TUNE_PARAM_DIFF_MED,
     TUNE_PARAM_DIFF_LARGE,
-    TUNE_PARAM_TURN_PREPARE_MS,
-    TUNE_PARAM_TURN_PWM,
-    TUNE_PARAM_TURN_PWM_MIN,
-    TUNE_PARAM_TURN_ANGLE,
-    TUNE_PARAM_TURN_SLOW_DEG,
-    TUNE_PARAM_TURN_BRAKE_DEG,
-    TUNE_PARAM_TURN_M_EXIT_DEG,
-    TUNE_PARAM_TURN_ACCEL_MS,
-    TUNE_PARAM_TURN_ACCEL_MIN,
     TUNE_PARAM_STARTUP_MS,
     TUNE_PARAM_STARTUP_MIN,
-    TUNE_PARAM_RA_PERSIST_CYCLES,
-    TUNE_PARAM_TURN_COOLDOWN_MS,
     TUNE_PARAM_LINE_LOST_STOP_MS,
     TUNE_PARAM_COUNT,
 } tuning_param_e;
@@ -97,18 +82,8 @@ static void tuning_normalize_speed_profile(track_speed_profile_t *profile)
         profile->diff_large = profile->diff_med;
     }
 
-    profile->turn_prepare_ms = (uint16)tuning_clamp_i32(profile->turn_prepare_ms, 0, 3000);
-    profile->turn_pwm        = (uint16)tuning_clamp_i32(profile->turn_pwm, 0, PWM_MAX);
-    profile->turn_pwm_min    = (uint16)tuning_clamp_i32(profile->turn_pwm_min, 0, PWM_MAX);
-    if(profile->turn_pwm_min > profile->turn_pwm)
-    {
-        profile->turn_pwm_min = profile->turn_pwm;
-    }
-
-    profile->turn_accel_ms      = (uint16)tuning_clamp_i32(profile->turn_accel_ms, 0, 3000);
-    profile->turn_accel_min_pct = (uint8)tuning_clamp_i32(profile->turn_accel_min_pct, 0, 100);
-    profile->startup_ms         = (uint16)tuning_clamp_i32(profile->startup_ms, 0, 3000);
-    profile->startup_min_pct    = (uint8)tuning_clamp_i32(profile->startup_min_pct, 0, 100);
+    profile->startup_ms      = (uint16)tuning_clamp_i32(profile->startup_ms, 0, 3000);
+    profile->startup_min_pct = (uint8)tuning_clamp_i32(profile->startup_min_pct, 0, 100);
 }
 
 static void tuning_normalize_config(void)
@@ -118,15 +93,6 @@ static void tuning_normalize_config(void)
     track_cfg.speed_mode = (track_speed_mode_e)tuning_clamp_i32(track_cfg.speed_mode,
                                                                 TRACK_SPEED_MODE_LOW,
                                                                 TRACK_SPEED_MODE_HIGH);
-    track_cfg.turns_per_lap = (uint8)tuning_clamp_i32(track_cfg.turns_per_lap, 1, 8);
-    track_cfg.total_laps = (uint8)tuning_clamp_i32(track_cfg.total_laps, 1, 5);
-
-    track_cfg.turn_angle_x10 = (uint16)tuning_clamp_i32(track_cfg.turn_angle_x10, 100, 1800);
-    track_cfg.turn_slow_deg_x10 = (uint16)tuning_clamp_i32(track_cfg.turn_slow_deg_x10, 0, track_cfg.turn_angle_x10);
-    track_cfg.turn_brake_deg_x10 = (uint16)tuning_clamp_i32(track_cfg.turn_brake_deg_x10, 0, track_cfg.turn_slow_deg_x10);
-    track_cfg.turn_m_exit_deg_x10 = (uint16)tuning_clamp_i32(track_cfg.turn_m_exit_deg_x10, 0, track_cfg.turn_angle_x10);
-    track_cfg.ra_persist_cycles = (uint8)tuning_clamp_i32(track_cfg.ra_persist_cycles, 1, 10);
-    track_cfg.turn_cooldown_ms = (uint16)tuning_clamp_i32(track_cfg.turn_cooldown_ms, 0, 3000);
     track_cfg.line_lost_stop_ms = (uint16)tuning_clamp_i32(track_cfg.line_lost_stop_ms, 0, 5000);
 
     for(index = 0; index < TRACK_SPEED_MODE_COUNT; index++)
@@ -164,14 +130,6 @@ static void tuning_adjust_selected(int8 direction)
                                                                         TRACK_SPEED_MODE_HIGH);
             break;
 
-        case TUNE_PARAM_TURNS_PER_LAP:
-            track_cfg.turns_per_lap = tuning_adjust_u8(track_cfg.turns_per_lap, direction, 1, 8);
-            break;
-
-        case TUNE_PARAM_TOTAL_LAPS:
-            track_cfg.total_laps = tuning_adjust_u8(track_cfg.total_laps, direction, 1, 5);
-            break;
-
         case TUNE_PARAM_BASE_PWM_L:
             profile->base_pwm_l = (int16)(profile->base_pwm_l + direction * TUNE_BASE_PWM_STEP);
             break;
@@ -192,69 +150,6 @@ static void tuning_adjust_selected(int8 direction)
             profile->diff_large = (int16)(profile->diff_large + direction * TUNE_DIFF_STEP);
             break;
 
-        case TUNE_PARAM_TURN_PREPARE_MS:
-            profile->turn_prepare_ms = tuning_adjust_u16(profile->turn_prepare_ms,
-                                                         direction * TUNE_TIME_STEP_MS,
-                                                         0,
-                                                         3000);
-            break;
-
-        case TUNE_PARAM_TURN_PWM:
-            profile->turn_pwm = tuning_adjust_u16(profile->turn_pwm,
-                                                  direction * TUNE_PWM_STEP,
-                                                  0,
-                                                  PWM_MAX);
-            break;
-
-        case TUNE_PARAM_TURN_PWM_MIN:
-            profile->turn_pwm_min = tuning_adjust_u16(profile->turn_pwm_min,
-                                                      direction * TUNE_PWM_STEP,
-                                                      0,
-                                                      PWM_MAX);
-            break;
-
-        case TUNE_PARAM_TURN_ANGLE:
-            track_cfg.turn_angle_x10 = tuning_adjust_u16(track_cfg.turn_angle_x10,
-                                                         direction * TUNE_ANGLE_STEP_X10,
-                                                         100,
-                                                         1800);
-            break;
-
-        case TUNE_PARAM_TURN_SLOW_DEG:
-            track_cfg.turn_slow_deg_x10 = tuning_adjust_u16(track_cfg.turn_slow_deg_x10,
-                                                            direction * TUNE_ANGLE_STEP_X10,
-                                                            0,
-                                                            1800);
-            break;
-
-        case TUNE_PARAM_TURN_BRAKE_DEG:
-            track_cfg.turn_brake_deg_x10 = tuning_adjust_u16(track_cfg.turn_brake_deg_x10,
-                                                             direction * TUNE_ANGLE_STEP_X10,
-                                                             0,
-                                                             1800);
-            break;
-
-        case TUNE_PARAM_TURN_M_EXIT_DEG:
-            track_cfg.turn_m_exit_deg_x10 = tuning_adjust_u16(track_cfg.turn_m_exit_deg_x10,
-                                                              direction * TUNE_ANGLE_STEP_X10,
-                                                              0,
-                                                              1800);
-            break;
-
-        case TUNE_PARAM_TURN_ACCEL_MS:
-            profile->turn_accel_ms = tuning_adjust_u16(profile->turn_accel_ms,
-                                                       direction * TUNE_TIME_STEP_MS,
-                                                       0,
-                                                       3000);
-            break;
-
-        case TUNE_PARAM_TURN_ACCEL_MIN:
-            profile->turn_accel_min_pct = tuning_adjust_u8(profile->turn_accel_min_pct,
-                                                           direction * TUNE_PERCENT_STEP,
-                                                           0,
-                                                           100);
-            break;
-
         case TUNE_PARAM_STARTUP_MS:
             profile->startup_ms = tuning_adjust_u16(profile->startup_ms,
                                                     direction * TUNE_TIME_STEP_MS,
@@ -267,17 +162,6 @@ static void tuning_adjust_selected(int8 direction)
                                                         direction * TUNE_PERCENT_STEP,
                                                         0,
                                                         100);
-            break;
-
-        case TUNE_PARAM_RA_PERSIST_CYCLES:
-            track_cfg.ra_persist_cycles = tuning_adjust_u8(track_cfg.ra_persist_cycles, direction, 1, 10);
-            break;
-
-        case TUNE_PARAM_TURN_COOLDOWN_MS:
-            track_cfg.turn_cooldown_ms = tuning_adjust_u16(track_cfg.turn_cooldown_ms,
-                                                           direction * TUNE_TIME_STEP_MS,
-                                                           0,
-                                                           3000);
             break;
 
         case TUNE_PARAM_LINE_LOST_STOP_MS:
@@ -311,12 +195,6 @@ static const char *tuning_param_name(tuning_param_e param)
         case TUNE_PARAM_TRACK_ENABLE:
             return "RUN";
 
-        case TUNE_PARAM_TURNS_PER_LAP:
-            return "TPLAP";
-
-        case TUNE_PARAM_TOTAL_LAPS:
-            return "LAPS";
-
         case TUNE_PARAM_BASE_PWM_L:
             return "BASEL";
 
@@ -332,44 +210,11 @@ static const char *tuning_param_name(tuning_param_e param)
         case TUNE_PARAM_DIFF_LARGE:
             return "DIFFL";
 
-        case TUNE_PARAM_TURN_PREPARE_MS:
-            return "TPREP";
-
-        case TUNE_PARAM_TURN_PWM:
-            return "TPWM";
-
-        case TUNE_PARAM_TURN_PWM_MIN:
-            return "TPMIN";
-
-        case TUNE_PARAM_TURN_ANGLE:
-            return "TANG";
-
-        case TUNE_PARAM_TURN_SLOW_DEG:
-            return "TSLOW";
-
-        case TUNE_PARAM_TURN_BRAKE_DEG:
-            return "TBRAK";
-
-        case TUNE_PARAM_TURN_M_EXIT_DEG:
-            return "TMEXT";
-
-        case TUNE_PARAM_TURN_ACCEL_MS:
-            return "TACMS";
-
-        case TUNE_PARAM_TURN_ACCEL_MIN:
-            return "TACMN";
-
         case TUNE_PARAM_STARTUP_MS:
             return "SUPMS";
 
         case TUNE_PARAM_STARTUP_MIN:
             return "SUPMN";
-
-        case TUNE_PARAM_RA_PERSIST_CYCLES:
-            return "RAPER";
-
-        case TUNE_PARAM_TURN_COOLDOWN_MS:
-            return "TCOOL";
 
         case TUNE_PARAM_LINE_LOST_STOP_MS:
             return "LSTOP";
@@ -393,14 +238,6 @@ static void tuning_format_param_value(tuning_param_e param, char *buffer)
             sprintf(buffer, "%s", track_cfg.tracking_enabled ? "ON" : "OFF");
             break;
 
-        case TUNE_PARAM_TURNS_PER_LAP:
-            sprintf(buffer, "%u", track_cfg.turns_per_lap);
-            break;
-
-        case TUNE_PARAM_TOTAL_LAPS:
-            sprintf(buffer, "%u", track_cfg.total_laps);
-            break;
-
         case TUNE_PARAM_BASE_PWM_L:
             sprintf(buffer, "%d", profile->base_pwm_l);
             break;
@@ -421,56 +258,12 @@ static void tuning_format_param_value(tuning_param_e param, char *buffer)
             sprintf(buffer, "%d", profile->diff_large);
             break;
 
-        case TUNE_PARAM_TURN_PREPARE_MS:
-            sprintf(buffer, "%u", profile->turn_prepare_ms);
-            break;
-
-        case TUNE_PARAM_TURN_PWM:
-            sprintf(buffer, "%u", profile->turn_pwm);
-            break;
-
-        case TUNE_PARAM_TURN_PWM_MIN:
-            sprintf(buffer, "%u", profile->turn_pwm_min);
-            break;
-
-        case TUNE_PARAM_TURN_ANGLE:
-            sprintf(buffer, "%.1f", TRACK_TURN_ANGLE);
-            break;
-
-        case TUNE_PARAM_TURN_SLOW_DEG:
-            sprintf(buffer, "%.1f", TRACK_TURN_SLOW_DEG);
-            break;
-
-        case TUNE_PARAM_TURN_BRAKE_DEG:
-            sprintf(buffer, "%.1f", TRACK_TURN_BRAKE_DEG);
-            break;
-
-        case TUNE_PARAM_TURN_M_EXIT_DEG:
-            sprintf(buffer, "%.1f", TRACK_TURN_M_EXIT_DEG);
-            break;
-
-        case TUNE_PARAM_TURN_ACCEL_MS:
-            sprintf(buffer, "%u", profile->turn_accel_ms);
-            break;
-
-        case TUNE_PARAM_TURN_ACCEL_MIN:
-            sprintf(buffer, "%u%%", profile->turn_accel_min_pct);
-            break;
-
         case TUNE_PARAM_STARTUP_MS:
             sprintf(buffer, "%u", profile->startup_ms);
             break;
 
         case TUNE_PARAM_STARTUP_MIN:
             sprintf(buffer, "%u%%", profile->startup_min_pct);
-            break;
-
-        case TUNE_PARAM_RA_PERSIST_CYCLES:
-            sprintf(buffer, "%u", track_cfg.ra_persist_cycles);
-            break;
-
-        case TUNE_PARAM_TURN_COOLDOWN_MS:
-            sprintf(buffer, "%u", track_cfg.turn_cooldown_ms);
             break;
 
         case TUNE_PARAM_LINE_LOST_STOP_MS:
