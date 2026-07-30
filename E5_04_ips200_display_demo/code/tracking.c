@@ -54,6 +54,8 @@ void tracking_init(void)
 
 void tracking_update(void)
 {
+    gray_read();
+
     if(!track_cfg.tracking_enabled)
     {
         Motor_Stop();
@@ -67,7 +69,6 @@ void tracking_update(void)
         return;
     }
 
-    gray_read();
     tracking_follow_line();
 }
 
