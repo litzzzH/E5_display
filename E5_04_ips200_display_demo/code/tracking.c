@@ -256,10 +256,10 @@ static void tracking_begin_finish_stop(void)
 
 static void tracking_complete_ball_stop(void)
 {
-    // 钢珠任务到达定时时刻后锁定用时并完成停车。
+    // 主循环可能因屏幕刷新晚于阈值进入此处，自动停车计时锁定为设定时刻。
     if(track_timer_active)
     {
-        track_elapsed_ms = system_getval_ms() - track_timer_start_ms;
+        track_elapsed_ms = track_cfg.control_profile[TRACK_TASK_BALL].action_start_ms;
         track_timer_active = 0;
         track_timer_completed = 1;
     }
