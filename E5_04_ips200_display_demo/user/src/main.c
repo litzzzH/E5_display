@@ -46,8 +46,8 @@
 // *************************** 循迹小车 MSPM0G3507 移植 ***************************
 // 硬件引脚分配:
 //   电机: PWM1-A27, PWM2-A26, DIR1-B11, DIR2-B10
-//   灰度: OUT1-B17, OUT2-B9, OUT3-B13, OUT4-B8, OUT5-B12
-//   IMU660RB: SCL-B23, SDA-B22, SDO-B21, CS-B19 (SPI1, 库默认)
+//   八路红外: S1-B12, S2-B8, S3-B13, S4-B9, S5-B23, S6-B21, S7-B22, S8-B17
+//   IMU 已关闭，其原有 B23/B21/B22 引脚用于八路红外传感器
 //   激光: A0
 //   显示屏: SCL-A12, SDA-A9, RES-A7, DC-A15, CS-A8, BLK-A13 (库默认)
 //
@@ -76,7 +76,7 @@ int main(void)
     ips200_set_font(IPS200_6X8_FONT);
 
 #if ENABLE_GRAYSCALE
-    // ===== 初始化灰度传感器 =====
+    // ===== 初始化八路红外循迹传感器 =====
     gray_init();
 #endif
 
@@ -117,7 +117,7 @@ int main(void)
 #if ENABLE_TRACKING
     tuning_ui_update();
 
-        // 循迹控制（读灰度 + 驱动电机）
+        // 循迹控制（读八路红外 + 驱动电机）
         tracking_update();
 #endif
 
@@ -127,7 +127,7 @@ int main(void)
         gray_display_result(0, 16);
 #endif
 #if ENABLE_TRACKING
-        tracking_display(0, 40);
+        tracking_display(0, 50);
     tuning_ui_display(0, 96);
 #endif
 #if ENABLE_IMU
